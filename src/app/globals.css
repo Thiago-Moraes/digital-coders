@@ -1,0 +1,130 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand Tokens matching Corporate Tech Academy / T2C2TECH template */
+  --color-brand-dark: #141E2B;
+  --color-brand-base: #1C2838;
+  --color-brand-card: #243447;
+  --color-brand-border: #33465C;
+  --color-brand-input: #182332;
+  --color-brand-cyan: #38BDF8;
+  --color-brand-silver: #94A3B8;
+  --color-brand-light-silver: #E2E8F0;
+
+  /* Material/System Tokens from DESIGN.md */
+  --color-surface: #071423;
+  --color-surface-dim: #071423;
+  --color-surface-bright: #2e3a4b;
+  --color-surface-container-lowest: #030f1e;
+  --color-surface-container-low: #101c2c;
+  --color-surface-container: #142030;
+  --color-surface-container-high: #1f2b3b;
+  --color-surface-container-highest: #2a3546;
+  --color-surface-variant: #2a3546;
+  --color-surface-tint: #7bd0ff;
+
+  --color-on-surface: #d7e3f9;
+  --color-on-surface-variant: #bdc8d1;
+  --color-inverse-surface: #d7e3f9;
+  --color-inverse-on-surface: #253141;
+
+  --color-outline: #87929a;
+  --color-outline-variant: #3e484f;
+
+  --color-primary: #8ed5ff;
+  --color-on-primary: #00354a;
+  --color-primary-container: #38bdf8;
+  --color-on-primary-container: #004965;
+  --color-primary-fixed: #c4e7ff;
+  --color-primary-fixed-dim: #7bd0ff;
+  --color-on-primary-fixed: #001e2c;
+  --color-on-primary-fixed-variant: #004c69;
+
+  --color-secondary: #bdc2ff;
+  --color-on-secondary: #131e8c;
+  --color-secondary-container: #2f3aa3;
+  --color-on-secondary-container: #a8afff;
+  --color-secondary-fixed: #e0e0ff;
+  --color-secondary-fixed-dim: #bdc2ff;
+  --color-on-secondary-fixed: #000767;
+  --color-on-secondary-fixed-variant: #2f3aa3;
+
+  --color-tertiary: #c3cdd9;
+  --color-on-tertiary: #28313b;
+  --color-tertiary-container: #a8b2be;
+  --color-on-tertiary-container: #3b454e;
+  --color-tertiary-fixed: #dae3f0;
+  --color-tertiary-fixed-dim: #bdc8d3;
+  --color-on-tertiary-fixed: #131d25;
+  --color-on-tertiary-fixed-variant: #3e4852;
+
+  --color-error: #ffb4ab;
+  --color-on-error: #690005;
+  --color-error-container: #93000a;
+  --color-on-error-container: #ffdad6;
+
+  --color-background: #071423;
+  --color-on-background: #d7e3f9;
+
+  /* Font Families */
+  --font-montserrat: var(--font-montserrat), sans-serif;
+  --font-inter: var(--font-inter), sans-serif;
+  --font-mono: var(--font-mono), monospace;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    color-scheme: dark;
+    background-color: #141E2B;
+  }
+
+  body {
+    background-color: #141E2B;
+    color: #E2E8F0;
+    font-family: var(--font-inter), sans-serif;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background-color: #38BDF8;
+    color: #141E2B;
+  }
+
+  /* Custom scrollbar matching corporate dark slate */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0F1722;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #33445C;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+  }
+}
+
+/* Subtle architectural blueprint grid overlay */
+.bg-blueprint-grid {
+  background-size: 24px 24px;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+}
+
+.bg-blueprint-lines {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(51, 68, 92, 0.25) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(51, 68, 92, 0.25) 1px, transparent 1px);
+}
+
+/* Institutional elevation shadows */
+.shadow-corporate-card {
+  box-shadow: 0 16px 32px -8px rgba(15, 23, 34, 0.65);
+}
+
+.glow-azure-subtle {
+  box-shadow: 0 0 24px rgba(56, 189, 248, 0.25);
+}
