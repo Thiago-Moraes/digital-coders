@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digital Coders - RAG + LLM Chat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(18, 24, 38, 0.8);
+      --border: rgba(255, 255, 255, 0.08);
+      --accent: #6366f1;
+      --accent-glow: rgba(99, 102, 241, 0.25);
+      --emerald: #10b981;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at top, #131b2e 0%, var(--bg) 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 1rem 2rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(9, 13, 22, 0.6);
+      backdrop-filter: blur(12px);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 700;
+      font-size: 1.15rem;
+      letter-spacing: -0.02em;
+    }
+    .badge {
+      font-size: 0.7rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 9999px;
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--emerald);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .header-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.875rem;
+      transition: color 0.2s;
+      margin-left: 1rem;
+    }
+    .header-links a:hover { color: #fff; }
+    
+    .container {
+      flex: 1;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.5rem;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 1.5rem;
+      height: calc(100vh - 73px);
+    }
+
+    /* Left Sidebar: Documents & Knowledge Base */
+    .sidebar {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      overflow-y: auto;
+      backdrop-filter: blur(10px);
+    }
+    .sidebar h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .ingest-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      background: rgba(255, 255, 255, 0.02);
+      padding: 1rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    input, textarea {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.65rem 0.85rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+    textarea { resize: vertical; min-height: 80px; }
+    button.btn-primary {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      border: none;
+      color: white;
+      font-weight: 600;
+      font-size: 0.875rem;
+      padding: 0.75rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.15s, opacity 0.2s;
+    }
+    button.btn-primary:hover { opacity: 0.95; transform: translateY(-1px); }
+    button.btn-primary:active { transform: translateY(0); }
+    
+    .doc-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      flex: 1;
+      overflow-y: auto;
+    }
+    .doc-item {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 0.75rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      font-size: 0.85rem;
+    }
+    .doc-title { font-weight: 500; color: #fff; margin-bottom: 0.2rem; }
+    .doc-meta { font-size: 0.75rem; color: var(--text-muted); }
+    .doc-del {
+      background: none;
+      border: none;
+      color: #ef4444;
+      cursor: pointer;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+    }
+    .doc-del:hover { opacity: 1; }
+
+    /* Right Main: Chat Area */
+    .chat-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+    .chat-header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .chat-messages {
+      flex: 1;
+      padding: 1.5rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .message {
+      display: flex;
+      flex-direction: column;
+      max-width: 80%;
+      gap: 0.35rem;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .message.user { align-self: flex-end; }
+    .message.assistant { align-self: flex-start; max-width: 85%; }
+    
+    .bubble {
+      padding: 0.9rem 1.2rem;
+      border-radius: 14px;
+      font-size: 0.925rem;
+      line-height: 1.55;
+    }
+    .user .bubble {
+      background: var(--accent);
+      color: #fff;
+      border-bottom-right-radius: 3px;
+    }
+    .assistant .bubble {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: #e2e8f0;
+      border-bottom-left-radius: 3px;
+    }
+    .sources-box {
+      margin-top: 0.6rem;
+      padding: 0.6rem 0.8rem;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px dashed rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+    .sources-title {
+      font-weight: 600;
+      color: #a5b4fc;
+      margin-bottom: 0.3rem;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .chunk-badge {
+      display: inline-block;
+      margin-top: 0.25rem;
+      margin-right: 0.25rem;
+      background: rgba(99, 102, 241, 0.15);
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      color: #c7d2fe;
+    }
+
+    .chat-input-bar {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 0.75rem;
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .chat-input-bar input {
+      flex: 1;
+      padding: 0.85rem 1.1rem;
+      font-size: 0.95rem;
+      border-radius: 10px;
+    }
+    .chat-input-bar button {
+      padding: 0.85rem 1.5rem;
+      border-radius: 10px;
+    }
+
+    @media (max-width: 900px) {
+      .container { grid-template-columns: 1fr; height: auto; }
+      .chat-panel { height: 600px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span style="font-size: 1.4rem;">⚡</span>
+      <span>Digital Coders RAG</span>
+      <span class="badge" id="health-badge">PGVECTOR CONECTADO</span>
+    </div>
+    <div class="header-links">
+      <a href="/docs" target="_blank">Swagger Docs ↗</a>
+      <a href="/redoc" target="_blank">ReDoc ↗</a>
+      <a href="/health" target="_blank">Health Check ↗</a>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Sidebar: Knowledge Base & Ingestion -->
+    <aside class="sidebar">
+      <h2>
+        <span>Base de Conhecimento</span>
+        <span id="doc-count" style="font-size: 0.8rem; color: var(--text-muted);">0 docs</span>
+      </h2>
+
+      <div class="ingest-form">
+        <input type="text" id="doc-title" placeholder="Título do Documento..." required />
+        <input type="text" id="doc-source" placeholder="Fonte (ex: manual.pdf ou URL)..." />
+        <textarea id="doc-content" placeholder="Cole aqui o texto a ser vetorizado (pgvector)..." required></textarea>
+        <button class="btn-primary" id="btn-ingest" onclick="handleIngest()">+ Indexar no pgvector</button>
+      </div>
+
+      <h3 style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.5rem;">Documentos Ativos</h3>
+      <div class="doc-list" id="doc-list">
+        <p style="font-size: 0.85rem; color: var(--text-muted); text-align: center; margin-top: 1rem;">Nenhum documento indexado ainda.</p>
+      </div>
+    </aside>
+
+    <!-- Main Chat Area -->
+    <main class="chat-panel">
+      <div class="chat-header">
+        <div>
+          <h3 style="font-size: 1.05rem;">Chat RAG + LLM</h3>
+          <p style="font-size: 0.78rem; color: var(--text-muted);">Pergunte com base nos documentos vetorizados no PostgreSQL</p>
+        </div>
+        <button onclick="newSession()" style="background: none; border: 1px solid var(--border); color: var(--text-muted); padding: 0.35rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">
+          Novo Chat
+        </button>
+      </div>
+
+      <div class="chat-messages" id="chat-messages">
+        <div class="message assistant">
+          <div class="bubble">
+            Olá! Eu sou o assistente inteligente da <strong>Digital Coders</strong> com suporte a <strong>RAG</strong> (Retrieval-Augmented Generation) conectado ao <strong>PostgreSQL + pgvector</strong>.<br><br>
+            Você pode adicionar documentos na barra lateral e me fazer qualquer pergunta sobre eles!
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-input-bar">
+        <input type="text" id="chat-input" placeholder="Digite sua pergunta..." onkeydown="if(event.key==='Enter') handleSendChat()" />
+        <button class="btn-primary" id="btn-send" onclick="handleSendChat()">Enviar</button>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    let currentSessionId = null;
+
+    async function checkHealth() {
+      try {
+        const res = await fetch('/health');
+        const data = await res.json();
+        const badge = document.getElementById('health-badge');
+        if (data.pgvector_extension) {
+          badge.textContent = `PGVECTOR ON (${data.embedding_model})`;
+          badge.style.background = 'rgba(16, 185, 129, 0.15)';
+          badge.style.color = '#10b981';
+        } else {
+          badge.textContent = 'PGVECTOR DESCONECTADO';
+          badge.style.background = 'rgba(239, 68, 68, 0.15)';
+          badge.style.color = '#ef4444';
+        }
+      } catch (e) {
+        console.error('Health check failed', e);
+      }
+    }
+
+    async function loadDocuments() {
+      try {
+        const res = await fetch('/api/documents');
+        const docs = await res.json();
+        const listEl = document.getElementById('doc-list');
+        document.getElementById('doc-count').textContent = `${docs.length} docs`;
+
+        if (!docs.length) {
+          listEl.innerHTML = '<p style="font-size: 0.85rem; color: var(--text-muted); text-align: center; margin-top: 1rem;">Nenhum documento indexado ainda.</p>';
+          return;
+        }
+
+        listEl.innerHTML = docs.map(d => `
+          <div class="doc-item">
+            <div>
+              <div class="doc-title">${escapeHtml(d.title)}</div>
+              <div class="doc-meta">${d.total_chunks} chunks vetorizados • ${d.source || 'Texto manual'}</div>
+            </div>
+            <button class="doc-del" onclick="deleteDocument('${d.id}')" title="Excluir">✕</button>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error('Failed to load documents', err);
+      }
+    }
+
+    async function handleIngest() {
+      const title = document.getElementById('doc-title').value.trim();
+      const source = document.getElementById('doc-source').value.trim();
+      const content = document.getElementById('doc-content').value.trim();
+      const btn = document.getElementById('btn-ingest');
+
+      if (!title || !content) {
+        alert('Por favor, preencha o título e o conteúdo do documento.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Processando embeddings...';
+
+      try {
+        const res = await fetch('/api/documents', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, source: source || null, content })
+        });
+        if (!res.ok) throw new Error(await res.text());
+
+        document.getElementById('doc-title').value = '';
+        document.getElementById('doc-source').value = '';
+        document.getElementById('doc-content').value = '';
+        await loadDocuments();
+      } catch (err) {
+        alert('Erro ao indexar documento: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '+ Indexar no pgvector';
+      }
+    }
+
+    async function deleteDocument(id) {
+      if (!confirm('Deseja realmente remover este documento e seus embeddings?')) return;
+      try {
+        await fetch(`/api/documents/${id}`, { method: 'DELETE' });
+        await loadDocuments();
+      } catch (err) {
+        alert('Erro ao excluir: ' + err.message);
+      }
+    }
+
+    function newSession() {
+      currentSessionId = null;
+      const chatEl = document.getElementById('chat-messages');
+      chatEl.innerHTML = `
+        <div class="message assistant">
+          <div class="bubble">
+            Nova conversa iniciada! Como posso ajudar você hoje com a base de conhecimento?
+          </div>
+        </div>
+      `;
+    }
+
+    async function handleSendChat() {
+      const input = document.getElementById('chat-input');
+      const text = input.value.trim();
+      const btn = document.getElementById('btn-send');
+
+      if (!text) return;
+      input.value = '';
+
+      const chatEl = document.getElementById('chat-messages');
+
+      // Append user bubble
+      chatEl.innerHTML += `
+        <div class="message user">
+          <div class="bubble">${escapeHtml(text)}</div>
+        </div>
+      `;
+
+      // Loading indicator
+      const loadingId = 'loading-' + Date.now();
+      chatEl.innerHTML += `
+        <div class="message assistant" id="${loadingId}">
+          <div class="bubble" style="opacity: 0.7;">Buscando no pgvector e formulando resposta...</div>
+        </div>
+      `;
+      chatEl.scrollTop = chatEl.scrollHeight;
+
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: text,
+            session_id: currentSessionId
+          })
+        });
+
+        const data = await res.json();
+        currentSessionId = data.session_id;
+
+        const loadingEl = document.getElementById(loadingId);
+        if (loadingEl) loadingEl.remove();
+
+        let sourcesHtml = '';
+        if (data.sources && data.sources.length > 0) {
+          sourcesHtml = `
+            <div class="sources-box">
+              <div class="sources-title">🔍 Fontes consultadas via pgvector (${data.sources.length}):</div>
+              ${data.sources.map(s => `
+                <div style="margin-top: 0.3rem;">
+                  <span class="chunk-badge">Similaridade: ${(s.similarity * 100).toFixed(1)}%</span>
+                  <span>${escapeHtml(s.content.substring(0, 180))}...</span>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        }
+
+        chatEl.innerHTML += `
+          <div class="message assistant">
+            <div class="bubble">${data.response.replace(/\n/g, '<br>')}</div>
+            ${sourcesHtml}
+          </div>
+        `;
+        chatEl.scrollTop = chatEl.scrollHeight;
+
+      } catch (err) {
+        const loadingEl = document.getElementById(loadingId);
+        if (loadingEl) loadingEl.remove();
+        chatEl.innerHTML += `
+          <div class="message assistant">
+            <div class="bubble" style="color: #ef4444;">Erro ao processar mensagem: ${escapeHtml(err.message)}</div>
+          </div>
+        `;
+      } finally {
+        btn.disabled = false;
+        input.focus();
+      }
+    }
+
+    function escapeHtml(string) {
+      return String(string)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Init
+    checkHealth();
+    loadDocuments();
+  </script>
+</body>
+</html>
